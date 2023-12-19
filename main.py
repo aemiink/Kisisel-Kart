@@ -29,10 +29,32 @@ class Card(db.Model):
     
 
 #Ödev #2. Kullanıcı tablosunu oluşturun
+class User(db.Model):
+    # Sütun Oluşturma
+    # id
+    # db.Column --> Sütun Oluştururuz
+    # db.Integer --> Tam Sayıları kapsayan değerler sadece bu sutunda depolancak
+    # primary_key=True  --> SBenzersiz bir kimlik numarasına sahip olacağını belriler.
+    # autoincrement=True --> Otomatik olarak dolacağı anlamına gelir.
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+
+    #Kullanıcı Adı
+    # db.Column --> Sütun Oluştururuz
+    # db.String --> Harfleri ve sayıları kapsayan değerler sadece bu sutunda depolancak
+    # nullable=False --> Databse'de buranın boş kalmyacağını db'ye bildiririz.
+    username = db.Column(db.String(100), nullable=False)
 
 
+    #Şifre
+    # db.Column --> Sütun Oluştururuz
+    # db.String --> Harfleri ve sayıları kapsayan değerler sadece bu sutunda depolancak
+    # nullable=False --> Databse'de buranın boş kalmyacağını db'ye bildiririz.
+    password = db.Column(db.String(30), nullable=False)
 
 
+   # Nesnenin ve kimliğin çıktısı
+    def __repr__(self):
+        return f'<Card {self.id}>'
 
 
 
@@ -47,10 +69,15 @@ def login():
             form_password = request.form['password']
             
             #Ödev #4. yetkilendirmeyi uygulamak
-            
-
-
-            
+            # User.query.all() --> User tablosundaki tüm verileri bir değişkende depolamamızı sağlar.
+            users_db = User.query.all()
+            for user in users_db:
+                if form_login == user.username and form_password == user.password:
+                    return redirect('/index')
+                else:
+                    error = 'Hatalı Giriş Yaptınız, Lütfen Tekrar Deneyiniz.'
+            return render_template('login.html', error=error) 
+        
         else:
             return render_template('login.html')
 
@@ -63,11 +90,11 @@ def reg():
         password = request.form['password']
         
         #Ödev #3 Kullanıcı verilerinin veri tabanına kaydedilmesini sağlayın
-        
+        user = User(username=login, password=password)
+        db.session.add(user)
+        db.session.commit()
 
-        
         return redirect('/')
-    
     else:    
         return render_template('registration.html')
 
