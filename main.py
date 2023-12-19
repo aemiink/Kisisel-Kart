@@ -1,78 +1,97 @@
-# İçeri Aktarma
+# İçe aktar
 from flask import Flask, render_template,request, redirect
-# Veritabanı kütüphanesini içe aktarma
+# Veri tabanı kitaplığını bağlama
 from flask_sqlalchemy import SQLAlchemy
 
 
-#Oluşturduğumuz uygulama python dosyamızın ismini alıyor.
 app = Flask(__name__)
-
-
-#app'imizi yapılandıracağız. --> app.config[]
-# 'SQLALCHEMY_DATABASE_URI' --> veritabanımın nerede oluşacağını belirtir.
+# SQLite'ı bağlama
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///diary.db'
-# 'SQLALCHEMY_TRACK_MODIFICATIONS' --> SQLAlchemy'nin model nesnelerindeki değişiklikleri otomatik olarak takip edip yönetmesini sağlar.
-# True --> Otomatik bir şekilde kontrol edilir.
-# False --> Manuel bir şekilde kontrol edilir.
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# DB oluşturma
+# Veri tabanı oluşturma
 db = SQLAlchemy(app)
-
-#Görev #1. DB tablosu oluşturma
-
-# class --> bizim tablo oluşturuken kuallanacağımız anahtar kelimedir.
-# Globalde class isimleri büyük harfle başlar bu yüzden büyük harfle başlarız.
-# paranteze --> db_ismi.Model kodunu yazarız.
+# Tablo oluşturma
 
 class Card(db.Model):
-    # (id) kimlik numarası --> Benzersiz bir kimlik numarası oluşturarak biz girdiğimiz verileri doğru bir şekilde gelmesini sağlayacağız
-    # db bir column oluşturacağımı belriten komut => db.Column komutudur.
-    # parantezin içerisine yazmam gereken ilk şey bu sütunda hangi veri tipi olacak (Integer(Sayısal), String(Harf), Boolean(Mantık))
-    # primary_key --> Bu özellik eğer True olarak işaretlenirse bu sutunda hiç bir veri birbirine benzemez.
-    id = db.Column(db.Integer, primary_key = True )
-    # string değerde kelime sınırlaması koymak istiyorsak --> db.String()
-    # nullable özelliği False olarak ayarlanırsa boş bırakılmaz, boş bırakılmasını isterseniz True yazabilirsiniz.
+    # Sütun oluşturma
+    # id
+    id = db.Column(db.Integer, primary_key=True)
+    # Başlık
     title = db.Column(db.String(100), nullable=False)
-    # string değerde kelime sınırlaması koymak istiyorsak --> db.String()
-    # nullable özelliği False olarak ayarlanırsa boş bırakılmaz, boş bırakılmasını isterseniz True yazabilirsiniz.
-    subtitle = db.Column(db.String(50), nullable=False)
-    # string değerde kelime sınırlaması koymak istiyorsak --> db.String()
-    # nullable özelliği False olarak ayarlanırsa boş bırakılmaz, boş bırakılmasını isterseniz True yazabilirsiniz.
-    text = db.Column(db.String, nullable=False)
+    # Tanım
+    subtitle = db.Column(db.String(300), nullable=False)
+    # Metin
+    text = db.Column(db.Text, nullable=False)
 
-
-   # Nesneyi ve id'sine göre yazdırma
+    # Nesnenin ve kimliğin çıktısı
     def __repr__(self):
         return f'<Card {self.id}>'
+    
+
+#Ödev #2. Kullanıcı tablosunu oluşturun
+
+
+
+
+
+
+
 
 
 # İçerik sayfasını çalıştırma
-@app.route('/')
+@app.route('/', methods=['GET','POST'])
+def login():
+        error = ''
+        if request.method == 'POST':
+            form_login = request.form['email']
+            form_password = request.form['password']
+            
+            #Ödev #4. yetkilendirmeyi uygulamak
+            
+
+
+            
+        else:
+            return render_template('login.html')
+
+
+
+@app.route('/reg', methods=['GET','POST'])
+def reg():
+    if request.method == 'POST':
+        login= request.form['email']
+        password = request.form['password']
+        
+        #Ödev #3 Kullanıcı verilerinin veri tabanına kaydedilmesini sağlayın
+        
+
+        
+        return redirect('/')
+    
+    else:    
+        return render_template('registration.html')
+
+
+# İçerik sayfasını çalıştırma
+@app.route('/index')
 def index():
-    # DB nesnelerini görüntüleme
-    # Görev #2. DB'deki nesneleri index.html'de görüntüleme
+    # Veri tabanı girişlerini görüntüleme
     cards = Card.query.order_by(Card.id).all()
+    return render_template('index.html', cards=cards)
 
-
-    return render_template('index.html',
-                           #kartlar = kartlar
-                            cards = cards
-                           )
-
-# Kartla sayfayı çalıştırma
+# Kayıt sayfasını çalıştırma
 @app.route('/card/<int:id>')
 def card(id):
-    # Görev #2. Id'ye göre doğru kartı görüntüleme
     card = Card.query.get(id)
 
     return render_template('card.html', card=card)
 
-# Sayfayı çalıştırma ve kart oluşturma
+# Giriş oluşturma sayfasını çalıştırma
 @app.route('/create')
 def create():
     return render_template('create_card.html')
 
-# Kart formu
+# Giriş formu
 @app.route('/form_create', methods=['GET','POST'])
 def form_create():
     if request.method == 'POST':
@@ -80,16 +99,17 @@ def form_create():
         subtitle =  request.form['subtitle']
         text =  request.form['text']
 
-        # Görev #2. Verileri DB'de depolamak için bir yol oluşturma
+        # Veri tabanına gönderilecek bir nesne oluşturma
         card = Card(title=title, subtitle=subtitle, text=text)
-        #değişkende ki verileri veri tablomda saklamak için kullandığım komut
-        db.session.add(card)
-        #Değişkenleri veritabanına commitlemem (göndermem) için gerekli olan komut:
-        db.session.commit()
 
-        return redirect('/')
+        db.session.add(card)
+        db.session.commit()
+        return redirect('/index')
     else:
         return render_template('create_card.html')
+
+
+
 
 
 if __name__ == "__main__":
